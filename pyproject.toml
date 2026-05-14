@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "maypop"
+version = "0.1.0"
+dependencies = [
+    "psycopg2-binary",
+    "sentence-transformers"
+]
+
+[project.scripts]
+maypop = "maypop.cli:main"
