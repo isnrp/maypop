@@ -15,7 +15,7 @@ def push(name, content):
     # 🔥 THIS is what you're missing or breaking
     embedding = get_embedding(content)
 
-    print("DEBUG embedding length:", len(embedding))  # optional sanity check
+    #print("DEBUG embedding length:", len(embedding))  # optional sanity check
 
     cur.execute(
         """
@@ -23,7 +23,7 @@ def push(name, content):
         VALUES (%s, %s, %s)
         RETURNING id;
         """,
-        (name, content, embedding)
+        (name, content, str(embedding))
     )
 
     app_id = cur.fetchone()[0]
