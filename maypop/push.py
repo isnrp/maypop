@@ -1,11 +1,5 @@
 from maypop.db import get_conn
-from sentence_transformers import SentenceTransformer
-
-_model = SentenceTransformer("all-MiniLM-L6-v2")
-
-
-def get_embedding(text):
-    return _model.encode(text).tolist()
+from maypop.embeddings import get_embedding
 
 
 def push(name, content):
