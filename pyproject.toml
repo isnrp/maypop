@@ -7,7 +7,7 @@ name = "maypop"
 version = "0.1.0"
 dependencies = [
     "psycopg2-binary",
-    "sentence-transformers"
+    "sentence-transformers",
     "python-dotenv"
 ]
 
