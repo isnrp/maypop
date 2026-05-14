@@ -1,19 +1,55 @@
 import sys
+
 from maypop.push import push
-from maypop.pull import pull
 from maypop.search import search
+from maypop.pull import pull
+
 
 def main():
-    cmd = sys.argv[1]
+    args = sys.argv[1:]
 
+    if not args:
+        print("Usage:")
+        print("  maypop push <name> <content>")
+        print("  maypop search <query>")
+        print("  maypop pull <id>")
+        return
+
+    cmd = args[0]
+
+    # -------------------
+    # PUSH
+    # -------------------
     if cmd == "push":
-        push(sys.argv[2:])
+        if len(args) < 3:
+            print("Usage: maypop push <name> <content>")
+            return
 
-    elif cmd == "pull":
-        pull(sys.argv[2:])
+        name = args[1]
+        content = " ".join(args[2:])  # allows spaces in content
+        push(name, content)
 
+    # -------------------
+    # SEARCH
+    # -------------------
     elif cmd == "search":
-        search(sys.argv[2])
+        if len(args) < 2:
+            print("Usage: maypop search <query>")
+            return
 
-if __name__ == "__main__":
-    main()
+        query = " ".join(args[1:])
+        search(query)
+
+    # -------------------
+    # PULL
+    # -------------------
+    elif cmd == "pull":
+        if len(args) < 2:
+            print("Usage: maypop pull <id>")
+            return
+
+        pull(args[1])
+
+    else:
+        print(f"Unknown command: {cmd}")
+        print("Use: push | search | pull")
