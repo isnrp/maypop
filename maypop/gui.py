@@ -5,7 +5,7 @@
 #     db.py, embeddings.py, push.py, search.py, pull.py, api.py  ← new
 #   gui.py   ← this file
 
-import pathlib, tempfile
+import os, pathlib, tempfile
 from nicegui import ui, app as ngapp
 from maypop.api import api_search, api_pull, api_push, api_list_all, api_delete, api_update
 
@@ -31,7 +31,7 @@ def make_card(app: dict, container):
 
     with container:
         with ui.card().classes(
-            "w-full rounded-2xl overflow-hidden shadow "
+            "w-full rounded-2xl overflow-hidden shadow flex flex-col "
             "hover:shadow-xl transition-all duration-200 cursor-pointer"
         ):
             # ── live iframe thumbnail ─────────────────────────────────────────
@@ -89,7 +89,7 @@ def make_card(app: dict, container):
                               ).props("flat dense size=sm").classes("mt-1 self-start")
 
             # ── actions ───────────────────────────────────────────────────────
-            with ui.row().classes("px-4 pb-4 gap-2"):
+            with ui.row().classes("px-4 pb-4 gap-2 mt-auto"):
                 if url:
                     ui.button("Open", icon="open_in_new",
                                on_click=lambda u=url: ui.navigate.to(u, new_tab=True)
@@ -279,7 +279,7 @@ def main_page():
         ui.label("🌿 maypop").classes("text-2xl font-bold tracking-tight")
 
         search_input = (
-            ui.input(placeholder="Search…")
+            ui.input(placeholder="Semantic search…")
             .classes("flex-1 max-w-md")
             .props("outlined dense dark clearable")
         )
@@ -342,7 +342,9 @@ def main_page():
 ui.run(
     title="maypop",
     dark=True,
-    port=8080,
+    port=int(os.environ.get("PORT", 8080)),
     favicon="🌿",
     tailwind=True,
+    host="0.0.0.0",
+    show=False,
 )
