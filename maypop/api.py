@@ -3,7 +3,7 @@ import datetime
 from maypop.db import get_conn
 from maypop.embeddings import get_embedding
 
-COLS = "id, name, tags, uploader, created_at, uploaded_at, content"
+COLS = "id, name, tags, uploader, created_at, uploaded_at, description, content"
 
 def _row(r) -> dict:
     return {
@@ -13,7 +13,8 @@ def _row(r) -> dict:
         "uploader":    r[3] or "",
         "created_at":  r[4],
         "uploaded_at": r[5],
-        "content":     r[6],
+        "description": r[6] or "",
+        "content":     r[7],
     }
 
 
@@ -49,18 +50,18 @@ def api_pull(app_id: int | str) -> dict | None:
     return _row(row) if row else None
 
 
-def api_push(name: str, content: str, tags: list[str] = None, uploader: str = "") -> int:
+def api_push(name: str, content: str, description: str = "", tags: list[str] = None, uploader: str = "") -> int:
     conn = get_conn()
     cur = conn.cursor()
-    embedding = get_embedding(content)
+    embedding = get_embedding(description if description else name)
     now = datetime.datetime.utcnow()
     cur.execute(
         """
-        INSERT INTO apps (name, content, embedding, tags, uploader, created_at, uploaded_at)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO apps (name, content, description, embedding, tags, uploader, created_at, uploaded_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING id;
         """,
-        (name, content, str(embedding), tags or [], uploader, now, now),
+        (name, content, description, str(embedding), tags or [], uploader, now, now),
     )
     app_id = cur.fetchone()[0]
     conn.commit()

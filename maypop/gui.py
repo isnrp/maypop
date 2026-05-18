@@ -73,24 +73,21 @@ def make_card(app: dict, container):
                 uploaded = str(app["uploaded_at"])[:10] if app.get("uploaded_at") else "—"
                 ui.label(f"created {created} · uploaded {uploaded}").classes("text-xs text-gray-500")
 
-                # expandable description (strips HTML tags for readability)
-                import re
-                raw = app.get("content") or ""
-                plain = re.sub(r"<[^>]+>", " ", raw).split()
-                snippet = " ".join(plain[:60]) + ("…" if len(plain) > 60 else "")
+                # expandable description
+                desc_text = app.get("description") or ""
+                if desc_text:
+                    desc_label = ui.label(desc_text).classes(
+                        "text-xs text-gray-400 mt-1 hidden"
+                    )
 
-                desc_label = ui.label(snippet).classes(
-                    "text-xs text-gray-400 mt-1 hidden"
-                )
+                    def toggle_desc(dl=desc_label):
+                        if "hidden" in dl._classes:
+                            dl.classes(remove="hidden")
+                        else:
+                            dl.classes("hidden")
 
-                def toggle_desc(dl=desc_label):
-                    if "hidden" in dl._classes:
-                        dl.classes(remove="hidden")
-                    else:
-                        dl.classes("hidden")
-
-                ui.button("Description", icon="expand_more", on_click=toggle_desc
-                          ).props("flat dense size=xs").classes("mt-1 self-start")
+                    ui.button("Description", icon="expand_more", on_click=toggle_desc
+                              ).props("flat dense size=xs").classes("mt-1 self-start")
 
             # ── actions ───────────────────────────────────────────────────────
             with ui.row().classes("px-3 pb-3 gap-2"):
@@ -154,6 +151,7 @@ def _push_dialog(on_done):
         name_in     = ui.input("App name").classes("w-full")
         uploader_in = ui.input("Your name").classes("w-full")
         tags_in     = ui.input("Tags (comma-separated)").classes("w-full")
+        desc_in     = ui.textarea("Description").classes("w-full").props("outlined rows=3")
 
         ui.label("HTML content (paste your index.html)").classes("text-sm text-gray-400")
         content_in = ui.textarea().classes("w-full font-mono text-xs h-48").props(
@@ -192,6 +190,7 @@ def _push_dialog(on_done):
                 app_id = api_push(
                     name_in.value.strip(),
                     content_in.value,
+                    description=desc_in.value.strip(),
                     tags=tags,
                     uploader=uploader_in.value.strip(),
                 )
