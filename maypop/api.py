@@ -18,7 +18,7 @@ def _row(r) -> dict:
     }
 
 
-def api_search(query: str, limit: int = 50, threshold: float = 1.2) -> list[dict]:
+def api_search(query: str, limit: int = 50, threshold: float = 1.4) -> list[dict]:
     conn = get_conn()
     cur = conn.cursor()
     vec = get_embedding(query)
