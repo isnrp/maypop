@@ -31,7 +31,7 @@ def make_card(app: dict, container):
 
     with container:
         with ui.card().classes(
-            "w-72 rounded-2xl overflow-hidden shadow "
+            "w-full rounded-2xl overflow-hidden shadow "
             "hover:shadow-xl transition-all duration-200 cursor-pointer"
         ):
             # ── live iframe thumbnail ─────────────────────────────────────────
@@ -53,30 +53,30 @@ def make_card(app: dict, container):
                 )
 
             # ── meta ──────────────────────────────────────────────────────────
-            with ui.card_section().classes("p-3 flex flex-col gap-1"):
+            with ui.card_section().classes("p-4 flex flex-col gap-2"):
                 with ui.row().classes("items-center justify-between w-full"):
-                    ui.label(app["name"]).classes("font-semibold text-base truncate")
-                    ui.badge(f"#{app['id']}", color="gray").classes("text-xs font-mono")
+                    ui.label(app["name"]).classes("font-semibold text-lg truncate")
+                    ui.badge(f"#{app['id']}", color="gray").classes("text-sm font-mono")
 
                 # tags
                 if app.get("tags"):
                     with ui.row().classes("flex-wrap gap-1 mt-1"):
                         for tag in app["tags"]:
-                            ui.badge(tag, color="teal").classes("text-xs")
+                            ui.badge(tag, color="teal").classes("text-sm")
 
                 # uploader
                 if app.get("uploader"):
-                    ui.label(f"↑ {app['uploader']}").classes("text-xs text-gray-400 mt-1")
+                    ui.label(f"↑ {app['uploader']}").classes("text-sm text-gray-400")
 
                 # dates
                 uploaded = str(app["uploaded_at"])[:10] if app.get("uploaded_at") else "—"
-                ui.label(f"uploaded {uploaded}").classes("text-xs text-gray-500")
+                ui.label(f"uploaded {uploaded}").classes("text-sm text-gray-500")
 
                 # expandable description
                 desc_text = app.get("description") or ""
                 if desc_text:
                     desc_label = ui.label(desc_text).classes(
-                        "text-xs text-gray-400 mt-1 hidden"
+                        "text-sm text-gray-400 mt-1 hidden"
                     )
 
                     def toggle_desc(dl=desc_label):
@@ -86,23 +86,23 @@ def make_card(app: dict, container):
                             dl.classes("hidden")
 
                     ui.button("Description", icon="expand_more", on_click=toggle_desc
-                              ).props("flat dense size=xs").classes("mt-1 self-start")
+                              ).props("flat dense size=sm").classes("mt-1 self-start")
 
             # ── actions ───────────────────────────────────────────────────────
-            with ui.row().classes("px-3 pb-3 gap-2"):
+            with ui.row().classes("px-4 pb-4 gap-2"):
                 if url:
                     ui.button("Open", icon="open_in_new",
                                on_click=lambda u=url: ui.navigate.to(u, new_tab=True)
-                               ).props("flat dense size=sm")
+                               ).props("flat dense")
                 ui.button("Pull", icon="download",
                            on_click=lambda a=app: _pull_dialog(a)
-                           ).props("flat dense size=sm color=primary")
+                           ).props("flat dense color=primary")
                 ui.button("Edit", icon="edit",
                            on_click=lambda a=app: _edit_dialog(a)
-                           ).props("flat dense size=sm color=secondary")
+                           ).props("flat dense color=secondary")
                 ui.button("Delete", icon="delete",
                            on_click=lambda a=app: _delete_dialog(a)
-                           ).props("flat dense size=sm color=negative")
+                           ).props("flat dense color=negative")
 
 
 # ── Pull dialog ───────────────────────────────────────────────────────────────
@@ -269,6 +269,8 @@ def _push_dialog(on_done):
 # ── Main page ─────────────────────────────────────────────────────────────────
 @ui.page("/")
 def main_page():
+    ui.query("body").classes("w-full")
+    ui.query(".nicegui-content").classes("w-full p-0")
 
     # ── header ────────────────────────────────────────────────────────────────
     with ui.header().classes(
@@ -277,7 +279,7 @@ def main_page():
         ui.label("🌿 maypop").classes("text-2xl font-bold tracking-tight")
 
         search_input = (
-            ui.input(placeholder="Semantic search…")
+            ui.input(placeholder="Search…")
             .classes("flex-1 max-w-md")
             .props("outlined dense dark clearable")
         )
@@ -290,7 +292,7 @@ def main_page():
         spinner    = ui.spinner(size="sm").classes("hidden")
 
     # ── card grid ─────────────────────────────────────────────────────────────
-    grid_wrap = ui.element("div").classes("px-6 pb-6")
+    grid_wrap = ui.element("div").classes("px-6 pb-6 w-full")
 
     def render_grid(apps: list[dict]):
         grid_wrap.clear()
@@ -303,7 +305,7 @@ def main_page():
             return
         with grid_wrap:
             grid = ui.element("div").classes(
-                "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
+                "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-5 w-full"
             )
             for app in apps:
                 make_card(app, grid)
