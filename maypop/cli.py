@@ -1,3 +1,4 @@
+# cli.py
 import sys
 
 from maypop.push import push
@@ -10,9 +11,9 @@ def main():
 
     if not args:
         print("Usage:")
-        print("  maypop push <name> <content>")
+        print("  maypop push <name> <path>        # path to index.html or a folder")
         print("  maypop search <query>")
-        print("  maypop pull <id>")
+        print("  maypop pull <id> [dest_folder]")
         return
 
     cmd = args[0]
@@ -22,12 +23,13 @@ def main():
     # -------------------
     if cmd == "push":
         if len(args) < 3:
-            print("Usage: maypop push <name> <content>")
+            print("Usage: maypop push <name> <path>")
+            print("  <path> can be a folder containing index.html, or the file itself.")
             return
 
         name = args[1]
-        content = " ".join(args[2:])  # allows spaces in content
-        push(name, content)
+        path = args[2]
+        push(name, path)
 
     # -------------------
     # SEARCH
@@ -45,10 +47,12 @@ def main():
     # -------------------
     elif cmd == "pull":
         if len(args) < 2:
-            print("Usage: maypop pull <id>")
+            print("Usage: maypop pull <id> [dest_folder]")
             return
 
-        pull(args[1])
+        app_id = args[1]
+        dest   = args[2] if len(args) >= 3 else "."
+        pull(app_id, dest)
 
     else:
         print(f"Unknown command: {cmd}")
