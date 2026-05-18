@@ -145,7 +145,7 @@ def _delete_dialog(app: dict):
             ui.button("Delete", icon="delete", on_click=do_delete).props("color=negative")
     d.open()
 def _push_dialog(on_done):
-    with ui.dialog() as d, ui.card().classes("p-5 gap-3 w-[560px]"):
+    with ui.dialog() as d, ui.card().classes("p-5 gap-3 w-[560px] max-h-[90vh] overflow-y-auto"):
         ui.label("Push New App").classes("font-bold text-lg")
 
         name_in     = ui.input("App name").classes("w-full")
@@ -154,8 +154,8 @@ def _push_dialog(on_done):
         desc_in     = ui.textarea("Description").classes("w-full").props("outlined rows=3")
 
         ui.label("HTML content (paste your index.html)").classes("text-sm text-gray-400")
-        content_in = ui.textarea().classes("w-full font-mono text-xs h-48").props(
-            'outlined autogrow'
+        content_in = ui.textarea().classes("w-full font-mono text-xs").props(
+            'outlined rows=8'
         )
 
         # — OR — load from a local file path
