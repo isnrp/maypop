@@ -5,9 +5,9 @@
 #     db.py, embeddings.py, push.py, search.py, pull.py, api.py  ← new
 #   gui.py   ← this file
 
-import sys, os, pathlib, tempfile
+import os, pathlib, tempfile
 from nicegui import ui, app as ngapp
-from maypop.api import api_search, api_pull, api_push, api_list_all, api_delete, api_update
+from .api import api_search, api_pull, api_push, api_list_all, api_delete, api_update
 
 # ── Serve each app's HTML through NiceGUI's static file router ───────────────
 PREVIEW_DIR = pathlib.Path(tempfile.mkdtemp(prefix="maypop_previews_"))
@@ -161,15 +161,15 @@ def _edit_dialog(app: dict):
         status = ui.label("").classes("text-sm")
 
         def do_save():
-            tags = [t.strip() for t in tags_in.value.split(",") if t.strip()]
+            tags = [t.strip() for t in (tags_in.value or "").split(",") if t.strip()]
             try:
                 api_update(
                     app["id"],
-                    name=name_in.value.strip(),
-                    description=desc_in.value.strip(),
+                    name=(name_in.value or "").strip(),
+                    description=(desc_in.value or "").strip(),
                     tags=tags,
-                    uploader=user_in.value.strip(),
-                    content=content_in.value,
+                    uploader=(user_in.value or "").strip(),
+                    content=content_in.value or "",
                 )
                 ui.notify("Saved!", type="positive")
                 d.close()
@@ -279,7 +279,7 @@ def main_page():
         ui.label("🌿 maypop").classes("text-2xl font-bold tracking-tight")
 
         search_input = (
-            ui.input(placeholder="Search…")
+            ui.input(placeholder="Semantic search…")
             .classes("flex-1 max-w-md")
             .props("outlined dense dark clearable")
         )
