@@ -7,7 +7,7 @@
 
 import os, pathlib, tempfile
 from nicegui import ui, app as ngapp
-from .api import api_search, api_pull, api_push, api_list_all, api_delete, api_update
+from maypop.api import api_search, api_pull, api_push, api_list_all, api_delete, api_update
 
 # ── Serve each app's HTML through NiceGUI's static file router ───────────────
 PREVIEW_DIR = pathlib.Path(tempfile.mkdtemp(prefix="maypop_previews_"))
@@ -279,7 +279,7 @@ def main_page():
         ui.label("🌿 maypop").classes("text-2xl font-bold tracking-tight")
 
         search_input = (
-            ui.input(placeholder="Semantic search…")
+            ui.input(placeholder="Search…")
             .classes("flex-1 max-w-md")
             .props("outlined dense dark clearable")
         )
@@ -347,4 +347,5 @@ ui.run(
     tailwind=True,
     host="0.0.0.0",
     show=False,
+    reload=False,
 )
