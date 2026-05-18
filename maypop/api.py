@@ -17,7 +17,11 @@ def _row(r) -> dict:
     }
 
 
-def api_search(query: str, limit: int = 50) -> list[dict]:
+def api_search(query: str, limit: int = 50, threshold: float = 0.7) -> list[dict]:
+    """
+    Returns only apps within `threshold` cosine distance of the query.
+    Lower threshold = stricter matching. 0.7 is a good default.
+    """
     conn = get_conn()
     cur = conn.cursor()
     vec = get_embedding(query)
@@ -25,10 +29,11 @@ def api_search(query: str, limit: int = 50) -> list[dict]:
         f"""
         SELECT {COLS} FROM apps
         WHERE embedding IS NOT NULL
+          AND embedding <-> %s::vector < %s
         ORDER BY embedding <-> %s::vector
         LIMIT %s;
         """,
-        (vec, limit),
+        (vec, threshold, vec, limit),
     )
     rows = cur.fetchall()
     cur.close(); conn.close()
@@ -61,6 +66,15 @@ def api_push(name: str, content: str, tags: list[str] = None, uploader: str = ""
     conn.commit()
     cur.close(); conn.close()
     return app_id
+
+
+def api_delete(app_id: int | str):
+    """Permanently delete an app by id."""
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM apps WHERE id = %s;", (app_id,))
+    conn.commit()
+    cur.close(); conn.close()
 
 
 def api_list_all(limit: int = 100) -> list[dict]:

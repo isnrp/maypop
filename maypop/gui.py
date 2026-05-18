@@ -7,7 +7,7 @@
 
 import pathlib, tempfile
 from nicegui import ui, app as ngapp
-from maypop.api import api_search, api_pull, api_push, api_list_all
+from maypop.api import api_search, api_pull, api_push, api_list_all, api_delete
 
 # ── Serve each app's HTML through NiceGUI's static file router ───────────────
 PREVIEW_DIR = pathlib.Path(tempfile.mkdtemp(prefix="maypop_previews_"))
@@ -73,6 +73,25 @@ def make_card(app: dict, container):
                 uploaded = str(app["uploaded_at"])[:10] if app.get("uploaded_at") else "—"
                 ui.label(f"created {created} · uploaded {uploaded}").classes("text-xs text-gray-500")
 
+                # expandable description (strips HTML tags for readability)
+                import re
+                raw = app.get("content") or ""
+                plain = re.sub(r"<[^>]+>", " ", raw).split()
+                snippet = " ".join(plain[:60]) + ("…" if len(plain) > 60 else "")
+
+                desc_label = ui.label(snippet).classes(
+                    "text-xs text-gray-400 mt-1 hidden"
+                )
+
+                def toggle_desc(dl=desc_label):
+                    if "hidden" in dl._classes:
+                        dl.classes(remove="hidden")
+                    else:
+                        dl.classes("hidden")
+
+                ui.button("Description", icon="expand_more", on_click=toggle_desc
+                          ).props("flat dense size=xs").classes("mt-1 self-start")
+
             # ── actions ───────────────────────────────────────────────────────
             with ui.row().classes("px-3 pb-3 gap-2"):
                 if url:
@@ -82,6 +101,9 @@ def make_card(app: dict, container):
                 ui.button("Pull", icon="download",
                            on_click=lambda a=app: _pull_dialog(a)
                            ).props("flat dense size=sm color=primary")
+                ui.button("Delete", icon="delete",
+                           on_click=lambda a=app: _delete_dialog(a)
+                           ).props("flat dense size=sm color=negative")
 
 
 # ── Pull dialog ───────────────────────────────────────────────────────────────
@@ -108,7 +130,23 @@ def _pull_dialog(app: dict):
     d.open()
 
 
-# ── Push dialog ───────────────────────────────────────────────────────────────
+# ── Delete dialog ─────────────────────────────────────────────────────────────
+def _delete_dialog(app: dict):
+    with ui.dialog() as d, ui.card().classes("p-5 gap-3 w-80"):
+        ui.label("Delete app?").classes("font-bold text-lg")
+        ui.label(f'"{app["name"]}" (#{app["id"]}) will be permanently removed.').classes(
+            "text-sm text-gray-400"
+        )
+        with ui.row():
+            ui.button("Cancel", on_click=d.close).props("flat")
+            def do_delete(a=app):
+                api_delete(a["id"])
+                ui.notify(f'Deleted "{a["name"]}"', type="positive")
+                d.close()
+                # reload the page to refresh the grid
+                ui.navigate.reload()
+            ui.button("Delete", icon="delete", on_click=do_delete).props("color=negative")
+    d.open()
 def _push_dialog(on_done):
     with ui.dialog() as d, ui.card().classes("p-5 gap-3 w-[560px]"):
         ui.label("Push New App").classes("font-bold text-lg")
@@ -159,6 +197,7 @@ def _push_dialog(on_done):
                 )
                 status.set_text(f"✅ Pushed as #{app_id}")
                 ui.notify(f'Pushed "{name_in.value}" as #{app_id}', type="positive")
+                d.close()
                 on_done()        # refresh the grid
             except Exception as e:
                 status.set_text(f"❌ {e}")
@@ -216,8 +255,13 @@ def main_page():
         try:
             if query.strip():
                 apps = api_search(query)
+                n = len(apps)
+                count_label.set_text(
+                    f'{n} result{"s" if n != 1 else ""} for "{query.strip()}"'
+                )
             else:
                 apps = api_list_all()
+                count_label.set_text(f"{len(apps)} app{'s' if len(apps) != 1 else ''}")
             render_grid(apps)
         except Exception as e:
             ui.notify(f"Error: {e}", type="negative")
