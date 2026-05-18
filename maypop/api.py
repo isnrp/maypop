@@ -18,7 +18,7 @@ def _row(r) -> dict:
     }
 
 
-def api_search(query: str, limit: int = 50, threshold: float = 0.9) -> list[dict]:
+def api_search(query: str, limit: int = 50, threshold: float = 1.2) -> list[dict]:
     conn = get_conn()
     cur = conn.cursor()
     vec = get_embedding(query)
@@ -28,14 +28,18 @@ def api_search(query: str, limit: int = 50, threshold: float = 0.9) -> list[dict
         SELECT {COLS} FROM apps
         WHERE (
             (embedding IS NOT NULL AND embedding <-> %s::vector < %s)
-            OR name ILIKE %s
+            OR name        ILIKE %s
             OR description ILIKE %s
-            OR uploader ILIKE %s
+            OR uploader    ILIKE %s
             OR EXISTS (
                 SELECT 1 FROM unnest(tags) t WHERE t ILIKE %s
             )
         )
-        ORDER BY embedding <-> %s::vector
+        ORDER BY
+            CASE WHEN embedding IS NOT NULL
+                 THEN embedding <-> %s::vector
+                 ELSE 1.0
+            END
         LIMIT %s;
         """,
         (vec, threshold, q, q, q, q, vec, limit),
@@ -74,11 +78,9 @@ def api_push(name: str, content: str, description: str = "", tags: list[str] = N
 
 
 def api_update(app_id: int | str, name: str, description: str, tags: list[str], uploader: str, content: str = None):
-    """Update an app's metadata and optionally its content. Re-embeds the description."""
     conn = get_conn()
     cur = conn.cursor()
     embedding = get_embedding(description if description else name)
-
     if content is not None:
         cur.execute(
             """
@@ -113,7 +115,6 @@ def api_update(app_id: int | str, name: str, description: str, tags: list[str], 
 
 
 def api_delete(app_id: int | str):
-    """Permanently delete an app by id."""
     conn = get_conn()
     cur = conn.cursor()
     cur.execute("DELETE FROM apps WHERE id = %s;", (app_id,))
