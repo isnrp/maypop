@@ -23,13 +23,15 @@ def main():
     # -------------------
     if cmd == "push":
         if len(args) < 3:
-            print("Usage: maypop push <name> <path>")
+            print("Usage: maypop push <name> <path> [uploader] [tag1,tag2,...]")
             print("  <path> can be a folder containing index.html, or the file itself.")
             return
 
-        name = args[1]
-        path = args[2]
-        push(name, path)
+        name     = args[1]
+        path     = args[2]
+        uploader = args[3] if len(args) >= 4 else ""
+        tags     = args[4].split(",") if len(args) >= 5 else []
+        push(name, path, tags=tags, uploader=uploader)
 
     # -------------------
     # SEARCH

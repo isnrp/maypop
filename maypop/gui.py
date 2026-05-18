@@ -53,15 +53,25 @@ def make_card(app: dict, container):
                 )
 
             # ── meta ──────────────────────────────────────────────────────────
-            with ui.card_section().classes("p-3 gap-1"):
+            with ui.card_section().classes("p-3 flex flex-col gap-1"):
                 with ui.row().classes("items-center justify-between w-full"):
                     ui.label(app["name"]).classes("font-semibold text-base truncate")
-                    ui.badge(str(app["id"]), color="gray").classes("text-xs font-mono")
+                    ui.badge(f"#{app['id']}", color="gray").classes("text-xs font-mono")
 
-                # content snippet
-                snippet = (app.get("content") or "").replace("\n", " ").strip()[:80]
-                if snippet:
-                    ui.label(snippet + "…").classes("text-xs text-gray-400 truncate")
+                # tags
+                if app.get("tags"):
+                    with ui.row().classes("flex-wrap gap-1 mt-1"):
+                        for tag in app["tags"]:
+                            ui.badge(tag, color="teal").classes("text-xs")
+
+                # uploader
+                if app.get("uploader"):
+                    ui.label(f"↑ {app['uploader']}").classes("text-xs text-gray-400 mt-1")
+
+                # dates
+                created  = str(app["created_at"])[:10]  if app.get("created_at")  else "—"
+                uploaded = str(app["uploaded_at"])[:10] if app.get("uploaded_at") else "—"
+                ui.label(f"created {created} · uploaded {uploaded}").classes("text-xs text-gray-500")
 
             # ── actions ───────────────────────────────────────────────────────
             with ui.row().classes("px-3 pb-3 gap-2"):
@@ -103,7 +113,9 @@ def _push_dialog(on_done):
     with ui.dialog() as d, ui.card().classes("p-5 gap-3 w-[560px]"):
         ui.label("Push New App").classes("font-bold text-lg")
 
-        name_in = ui.input("App name").classes("w-full")
+        name_in     = ui.input("App name").classes("w-full")
+        uploader_in = ui.input("Your name").classes("w-full")
+        tags_in     = ui.input("Tags (comma-separated)").classes("w-full")
 
         ui.label("HTML content (paste your index.html)").classes("text-sm text-gray-400")
         content_in = ui.textarea().classes("w-full font-mono text-xs h-48").props(
@@ -138,7 +150,13 @@ def _push_dialog(on_done):
                 status.set_text("❌ Content is required")
                 return
             try:
-                app_id = api_push(name_in.value.strip(), content_in.value)
+                tags = [t.strip() for t in tags_in.value.split(",") if t.strip()]
+                app_id = api_push(
+                    name_in.value.strip(),
+                    content_in.value,
+                    tags=tags,
+                    uploader=uploader_in.value.strip(),
+                )
                 status.set_text(f"✅ Pushed as #{app_id}")
                 ui.notify(f'Pushed "{name_in.value}" as #{app_id}', type="positive")
                 on_done()        # refresh the grid
