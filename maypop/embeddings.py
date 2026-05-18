@@ -1,6 +1,11 @@
-from fastembed import TextEmbedding
+import os, httpx
 
-_model = TextEmbedding("BAAI/bge-small-en-v1.5")
+API_URL = "https://api-inference.huggingface.co/models/sentence-transformers/all-MiniLM-L6-v2"
 
-def get_embedding(text: str):
-    return list(_model.embed([text]))[0].tolist()
+def get_embedding(text: str) -> list[float]:
+    response = httpx.post(
+        API_URL,
+        headers={"Authorization": f"Bearer {os.environ['HF_TOKEN']}"},
+        json={"inputs": text},
+    )
+    return response.json()
