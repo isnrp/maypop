@@ -20,7 +20,8 @@ def push(name: str, path: str, description: str = "", tags: list[str] = None, up
         return
 
     content = index.read_text(encoding="utf-8")
-    embedding = get_embedding(description if description else name)
+    embed_text = " ".join(filter(None, [name, description] + (tags or [])))
+    embedding = get_embedding(embed_text)
     now = datetime.datetime.utcnow()
 
     conn = get_conn()

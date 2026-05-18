@@ -18,7 +18,7 @@ def _row(r) -> dict:
     }
 
 
-def api_search(query: str, limit: int = 50, threshold: float = 1.4) -> list[dict]:
+def api_search(query: str, limit: int = 50, threshold: float = 1.38) -> list[dict]:
     conn = get_conn()
     cur = conn.cursor()
     vec = get_embedding(query)
@@ -61,7 +61,8 @@ def api_pull(app_id: int | str) -> dict | None:
 def api_push(name: str, content: str, description: str = "", tags: list[str] = None, uploader: str = "") -> int:
     conn = get_conn()
     cur = conn.cursor()
-    embedding = get_embedding(description if description else name)
+    embed_text = " ".join(filter(None, [name, description] + (tags or [])))
+    embedding = get_embedding(embed_text)
     now = datetime.datetime.utcnow()
     cur.execute(
         """
@@ -80,7 +81,8 @@ def api_push(name: str, content: str, description: str = "", tags: list[str] = N
 def api_update(app_id: int | str, name: str, description: str, tags: list[str], uploader: str, content: str = None):
     conn = get_conn()
     cur = conn.cursor()
-    embedding = get_embedding(description if description else name)
+    embed_text = " ".join(filter(None, [name, description] + (tags or [])))
+    embedding = get_embedding(embed_text)
     if content is not None:
         cur.execute(
             """
