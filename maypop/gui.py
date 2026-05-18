@@ -279,7 +279,7 @@ def main_page():
         ui.label("🌿 maypop").classes("text-2xl font-bold tracking-tight")
 
         search_input = (
-            ui.input(placeholder="Semantic search…")
+            ui.input(placeholder="Search…")
             .classes("flex-1 max-w-md")
             .props("outlined dense dark clearable")
         )
