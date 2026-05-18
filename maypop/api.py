@@ -69,6 +69,28 @@ def api_push(name: str, content: str, description: str = "", tags: list[str] = N
     return app_id
 
 
+def api_update(app_id: int | str, name: str, description: str, tags: list[str], uploader: str):
+    """Update an app's metadata and re-embed the description."""
+    conn = get_conn()
+    cur = conn.cursor()
+    embedding = get_embedding(description if description else name)
+    cur.execute(
+        """
+        UPDATE apps
+        SET name        = %s,
+            description = %s,
+            tags        = %s,
+            uploader    = %s,
+            embedding   = %s,
+            uploaded_at = NOW()
+        WHERE id = %s;
+        """,
+        (name, description, tags, uploader, str(embedding), app_id),
+    )
+    conn.commit()
+    cur.close(); conn.close()
+
+
 def api_delete(app_id: int | str):
     """Permanently delete an app by id."""
     conn = get_conn()

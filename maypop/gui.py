@@ -7,7 +7,7 @@
 
 import pathlib, tempfile
 from nicegui import ui, app as ngapp
-from maypop.api import api_search, api_pull, api_push, api_list_all, api_delete
+from maypop.api import api_search, api_pull, api_push, api_list_all, api_delete, api_update
 
 # ── Serve each app's HTML through NiceGUI's static file router ───────────────
 PREVIEW_DIR = pathlib.Path(tempfile.mkdtemp(prefix="maypop_previews_"))
@@ -98,6 +98,9 @@ def make_card(app: dict, container):
                 ui.button("Pull", icon="download",
                            on_click=lambda a=app: _pull_dialog(a)
                            ).props("flat dense size=sm color=primary")
+                ui.button("Edit", icon="edit",
+                           on_click=lambda a=app: _edit_dialog(a)
+                           ).props("flat dense size=sm color=secondary")
                 ui.button("Delete", icon="delete",
                            on_click=lambda a=app: _delete_dialog(a)
                            ).props("flat dense size=sm color=negative")
@@ -124,6 +127,43 @@ def _pull_dialog(app: dict):
         with ui.row():
             ui.button("Cancel", on_click=d.close).props("flat")
             ui.button("Save HTML", on_click=do_save).props("color=primary")
+    d.open()
+
+
+# ── Edit dialog ───────────────────────────────────────────────────────────────
+def _edit_dialog(app: dict):
+    with ui.dialog() as d, ui.card().classes("p-5 gap-3 w-[520px] max-h-[90vh] overflow-y-auto"):
+        ui.label(f'Edit #{app["id"]}').classes("font-bold text-lg")
+
+        name_in  = ui.input("Name", value=app["name"]).classes("w-full")
+        user_in  = ui.input("Uploader", value=app.get("uploader") or "").classes("w-full")
+        tags_in  = ui.input(
+            "Tags (comma-separated)",
+            value=", ".join(app.get("tags") or [])
+        ).classes("w-full")
+        desc_in  = ui.textarea("Description", value=app.get("description") or "").classes("w-full").props("outlined rows=4")
+
+        status = ui.label("").classes("text-sm")
+
+        def do_save():
+            tags = [t.strip() for t in tags_in.value.split(",") if t.strip()]
+            try:
+                api_update(
+                    app["id"],
+                    name=name_in.value.strip(),
+                    description=desc_in.value.strip(),
+                    tags=tags,
+                    uploader=user_in.value.strip(),
+                )
+                ui.notify("Saved!", type="positive")
+                d.close()
+                ui.navigate.reload()
+            except Exception as e:
+                status.set_text(f"❌ {e}")
+
+        with ui.row():
+            ui.button("Cancel", on_click=d.close).props("flat")
+            ui.button("Save", icon="save", on_click=do_save).props("color=primary")
     d.open()
 
 
