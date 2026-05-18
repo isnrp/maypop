@@ -5,9 +5,11 @@
 #     db.py, embeddings.py, push.py, search.py, pull.py, api.py  ← new
 #   gui.py   ← this file
 
-import os, pathlib, tempfile
+import sys, os, pathlib, tempfile
 from nicegui import ui, app as ngapp
 from maypop.api import api_search, api_pull, api_push, api_list_all, api_delete, api_update
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # ── Serve each app's HTML through NiceGUI's static file router ───────────────
 PREVIEW_DIR = pathlib.Path(tempfile.mkdtemp(prefix="maypop_previews_"))
