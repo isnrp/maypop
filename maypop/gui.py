@@ -132,7 +132,7 @@ def _pull_dialog(app: dict):
 
 # ── Edit dialog ───────────────────────────────────────────────────────────────
 def _edit_dialog(app: dict):
-    with ui.dialog() as d, ui.card().classes("p-5 gap-3 w-[520px] max-h-[90vh] overflow-y-auto"):
+    with ui.dialog() as d, ui.card().classes("p-5 gap-3 w-[560px] max-h-[90vh] overflow-y-auto"):
         ui.label(f'Edit #{app["id"]}').classes("font-bold text-lg")
 
         name_in  = ui.input("Name", value=app["name"]).classes("w-full")
@@ -141,7 +141,23 @@ def _edit_dialog(app: dict):
             "Tags (comma-separated)",
             value=", ".join(app.get("tags") or [])
         ).classes("w-full")
-        desc_in  = ui.textarea("Description", value=app.get("description") or "").classes("w-full").props("outlined rows=4")
+        desc_in  = ui.textarea("Description", value=app.get("description") or "").classes("w-full").props("outlined rows=3")
+
+        ui.separator()
+        ui.label("HTML content (index.html)").classes("text-sm text-gray-400")
+        content_in = ui.textarea(value=app.get("content") or "").classes("w-full font-mono text-xs").props("outlined rows=8")
+
+        # load from file shortcut
+        with ui.row().classes("w-full items-center gap-2"):
+            path_in = ui.input("Or load from file path").classes("flex-1 text-sm")
+            def load_file():
+                p = pathlib.Path(path_in.value)
+                if p.exists():
+                    content_in.set_value(p.read_text(encoding="utf-8"))
+                    ui.notify("File loaded", type="positive")
+                else:
+                    ui.notify(f"File not found: {p}", type="negative")
+            ui.button("Load", on_click=load_file).props("flat dense size=sm")
 
         status = ui.label("").classes("text-sm")
 
@@ -154,6 +170,7 @@ def _edit_dialog(app: dict):
                     description=desc_in.value.strip(),
                     tags=tags,
                     uploader=user_in.value.strip(),
+                    content=content_in.value,
                 )
                 ui.notify("Saved!", type="positive")
                 d.close()

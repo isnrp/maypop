@@ -18,23 +18,27 @@ def _row(r) -> dict:
     }
 
 
-def api_search(query: str, limit: int = 50, threshold: float = 0.7) -> list[dict]:
-    """
-    Returns only apps within `threshold` cosine distance of the query.
-    Lower threshold = stricter matching. 0.7 is a good default.
-    """
+def api_search(query: str, limit: int = 50, threshold: float = 0.9) -> list[dict]:
     conn = get_conn()
     cur = conn.cursor()
     vec = get_embedding(query)
+    q = f"%{query}%"
     cur.execute(
         f"""
         SELECT {COLS} FROM apps
-        WHERE embedding IS NOT NULL
-          AND embedding <-> %s::vector < %s
+        WHERE (
+            (embedding IS NOT NULL AND embedding <-> %s::vector < %s)
+            OR name ILIKE %s
+            OR description ILIKE %s
+            OR uploader ILIKE %s
+            OR EXISTS (
+                SELECT 1 FROM unnest(tags) t WHERE t ILIKE %s
+            )
+        )
         ORDER BY embedding <-> %s::vector
         LIMIT %s;
         """,
-        (vec, threshold, vec, limit),
+        (vec, threshold, q, q, q, q, vec, limit),
     )
     rows = cur.fetchall()
     cur.close(); conn.close()
@@ -69,24 +73,41 @@ def api_push(name: str, content: str, description: str = "", tags: list[str] = N
     return app_id
 
 
-def api_update(app_id: int | str, name: str, description: str, tags: list[str], uploader: str):
-    """Update an app's metadata and re-embed the description."""
+def api_update(app_id: int | str, name: str, description: str, tags: list[str], uploader: str, content: str = None):
+    """Update an app's metadata and optionally its content. Re-embeds the description."""
     conn = get_conn()
     cur = conn.cursor()
     embedding = get_embedding(description if description else name)
-    cur.execute(
-        """
-        UPDATE apps
-        SET name        = %s,
-            description = %s,
-            tags        = %s,
-            uploader    = %s,
-            embedding   = %s,
-            uploaded_at = NOW()
-        WHERE id = %s;
-        """,
-        (name, description, tags, uploader, str(embedding), app_id),
-    )
+
+    if content is not None:
+        cur.execute(
+            """
+            UPDATE apps
+            SET name        = %s,
+                description = %s,
+                tags        = %s,
+                uploader    = %s,
+                embedding   = %s,
+                content     = %s,
+                uploaded_at = NOW()
+            WHERE id = %s;
+            """,
+            (name, description, tags, uploader, str(embedding), content, app_id),
+        )
+    else:
+        cur.execute(
+            """
+            UPDATE apps
+            SET name        = %s,
+                description = %s,
+                tags        = %s,
+                uploader    = %s,
+                embedding   = %s,
+                uploaded_at = NOW()
+            WHERE id = %s;
+            """,
+            (name, description, tags, uploader, str(embedding), app_id),
+        )
     conn.commit()
     cur.close(); conn.close()
 
