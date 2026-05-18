@@ -18,11 +18,47 @@ def _row(r) -> dict:
     }
 
 
-def api_search(query: str, limit: int = 50, threshold: float = 1.34) -> list[dict]:
+TAG_PARENTS = {
+    "platformer":  ["game"],
+    "fps":         ["game", "shooter"],
+    "shooter":     ["game"],
+    "rpg":         ["game"],
+    "puzzle":      ["game"],
+    "strategy":    ["game"],
+    "tower defense": ["game", "strategy"],
+    "racing":      ["game"],
+    "sports":      ["game"],
+    "arcade":      ["game"],
+    "adventure":   ["game"],
+    "simulation":  ["game"],
+    "horror":      ["game"],
+}
+
+# build reverse map: parent → all children
+TAG_CHILDREN: dict[str, list[str]] = {}
+for child, parents in TAG_PARENTS.items():
+    for parent in parents:
+        TAG_CHILDREN.setdefault(parent, []).append(child)
+
+
+def _expand_query_tags(query: str) -> list[str]:
+    """Return the query plus any synonym/child tags."""
+    q = query.lower().strip()
+    extras = TAG_CHILDREN.get(q, [])
+    return [q] + extras
+
+
+def api_search(query: str, limit: int = 50, threshold: float = 1.38) -> list[dict]:
     conn = get_conn()
     cur = conn.cursor()
     vec = get_embedding(query)
     q = f"%{query}%"
+    expanded = _expand_query_tags(query)
+    # build tag match for all expanded terms
+    tag_conditions = " OR ".join(
+        ["EXISTS (SELECT 1 FROM unnest(tags) t WHERE t ILIKE %s)"] * len(expanded)
+    )
+    tag_params = [f"%{t}%" for t in expanded]
     cur.execute(
         f"""
         SELECT {COLS} FROM apps
@@ -31,9 +67,7 @@ def api_search(query: str, limit: int = 50, threshold: float = 1.34) -> list[dic
             OR name        ILIKE %s
             OR description ILIKE %s
             OR uploader    ILIKE %s
-            OR EXISTS (
-                SELECT 1 FROM unnest(tags) t WHERE t ILIKE %s
-            )
+            OR {tag_conditions}
         )
         ORDER BY
             CASE WHEN embedding IS NOT NULL
@@ -42,7 +76,7 @@ def api_search(query: str, limit: int = 50, threshold: float = 1.34) -> list[dic
             END
         LIMIT %s;
         """,
-        (vec, threshold, q, q, q, q, vec, limit),
+        (vec, threshold, q, q, q, *tag_params, vec, limit),
     )
     rows = cur.fetchall()
     cur.close(); conn.close()
