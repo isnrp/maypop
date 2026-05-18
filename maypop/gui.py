@@ -69,9 +69,8 @@ def make_card(app: dict, container):
                     ui.label(f"↑ {app['uploader']}").classes("text-xs text-gray-400 mt-1")
 
                 # dates
-                created  = str(app["created_at"])[:10]  if app.get("created_at")  else "—"
                 uploaded = str(app["uploaded_at"])[:10] if app.get("uploaded_at") else "—"
-                ui.label(f"created {created} · uploaded {uploaded}").classes("text-xs text-gray-500")
+                ui.label(f"uploaded {uploaded}").classes("text-xs text-gray-500")
 
                 # expandable description
                 desc_text = app.get("description") or ""
@@ -206,7 +205,7 @@ def _push_dialog(on_done):
         ui.label("Push New App").classes("font-bold text-lg")
 
         name_in     = ui.input("App name").classes("w-full")
-        uploader_in = ui.input("Your name").classes("w-full")
+        uploader_in = ui.input("Creator").classes("w-full")
         tags_in     = ui.input("Tags (comma-separated)").classes("w-full")
         desc_in     = ui.textarea("Description").classes("w-full").props("outlined rows=3")
 
@@ -236,20 +235,23 @@ def _push_dialog(on_done):
         status = ui.label("").classes("text-sm")
 
         def do_push():
-            if not name_in.value.strip():
+            if not (name_in.value or "").strip():
                 status.set_text("❌ Name is required")
                 return
-            if not content_in.value.strip():
+            if not (uploader_in.value or "").strip():
+                status.set_text("❌ Creator is required")
+                return
+            if not (content_in.value or "").strip():
                 status.set_text("❌ Content is required")
                 return
             try:
-                tags = [t.strip() for t in tags_in.value.split(",") if t.strip()]
+                tags = [t.strip() for t in (tags_in.value or "").split(",") if t.strip()]
                 app_id = api_push(
-                    name_in.value.strip(),
-                    content_in.value,
-                    description=desc_in.value.strip(),
+                    (name_in.value or "").strip(),
+                    content_in.value or "",
+                    description=(desc_in.value or "").strip(),
                     tags=tags,
-                    uploader=uploader_in.value.strip(),
+                    uploader=(uploader_in.value or "").strip(),
                 )
                 status.set_text(f"✅ Pushed as #{app_id}")
                 ui.notify(f'Pushed "{name_in.value}" as #{app_id}', type="positive")
