@@ -34,7 +34,6 @@ lxml_html_clean==0.4.4
 markdown-it-py==4.2.0
 markdown2==2.5.5
 MarkupSafe==3.0.3
--e git+https://github.com/isnrp/maypop.git@6ec0e84b68aed5381abe06a07bd9bce958a2cf03#egg=maypop
 mdurl==0.1.2
 mmh3==5.2.1
 mpmath==1.3.0
